@@ -41,7 +41,7 @@ func TestCallbacks_Apply(t *testing.T) {
 		{Callbacks{}, []lint.Problem{}},
 		{
 			Callbacks{
-				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 					return []lint.Problem{{Message: "enum"}}, nil
 				},
 			},
@@ -49,7 +49,7 @@ func TestCallbacks_Apply(t *testing.T) {
 		},
 		{
 			Callbacks{
-				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 					return []lint.Problem{{Message: "enumvalue"}}, nil
 				},
 			},
@@ -57,7 +57,7 @@ func TestCallbacks_Apply(t *testing.T) {
 		},
 		{
 			Callbacks{
-				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 					return []lint.Problem{{Message: "field"}}, nil
 				},
 			},
@@ -65,7 +65,7 @@ func TestCallbacks_Apply(t *testing.T) {
 		},
 		{
 			Callbacks{
-				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 					return []lint.Problem{{Message: "message"}}, nil
 				},
 			},
@@ -73,7 +73,7 @@ func TestCallbacks_Apply(t *testing.T) {
 		},
 		{
 			Callbacks{
-				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 					return []lint.Problem{{Message: "method"}}, nil
 				},
 			},
@@ -81,7 +81,7 @@ func TestCallbacks_Apply(t *testing.T) {
 		},
 		{
 			Callbacks{
-				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 					return []lint.Problem{{Message: "oneof"}}, nil
 				},
 			},
@@ -89,7 +89,7 @@ func TestCallbacks_Apply(t *testing.T) {
 		},
 		{
 			Callbacks{
-				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+				EnumCallback: func(d protoreflect.EnumDescriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 					return []lint.Problem{{Message: "service"}}, nil
 				},
 			},
@@ -100,7 +100,7 @@ func TestCallbacks_Apply(t *testing.T) {
 	for _, test := range tests {
 		results := []lint.Problem{}
 		for _, d := range descriptors {
-			problems, err := test.callbacks.Apply(d, lint.DescriptorSource{})
+			problems, err := test.callbacks.Apply(d, lint.DescriptorSourceMap{})
 			if err != nil {
 				t.Errorf("Callbacks.Apply returns unexpected error: %v", err)
 			}
@@ -126,7 +126,7 @@ func TestCallbacks_Apply_DescriptorCallback(t *testing.T) {
 		{Callbacks{}, 0},
 		{
 			Callbacks{
-				DescriptorCallback: func(d protoreflect.Descriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+				DescriptorCallback: func(d protoreflect.Descriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 					return []lint.Problem{{Message: "desc"}}, nil
 				},
 			},
@@ -137,7 +137,7 @@ func TestCallbacks_Apply_DescriptorCallback(t *testing.T) {
 	for _, test := range tests {
 		all := []lint.Problem{}
 		for _, d := range descriptors {
-			problems, err := test.callbacks.Apply(d, lint.DescriptorSource{})
+			problems, err := test.callbacks.Apply(d, lint.DescriptorSourceMap{})
 			if err != nil {
 				t.Errorf("Callbacks.Apply returns unexpected error: %v", err)
 			}

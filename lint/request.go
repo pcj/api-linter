@@ -20,31 +20,30 @@ import (
 	descriptorpb "github.com/golang/protobuf/v2/types/descriptor"
 )
 
-// Request defines input data for a rule to perform linting.
-type Request struct {
+type LintRequest struct {
+	Files   []File
+	Configs Configs
+}
+
+type File struct {
+	Name     string
+	Contents string
+}
+
+// protoRequest defines input data for a rule to perform linting.
+type protoRequest struct {
 	fileDesc   protoreflect.FileDescriptor
-	descSource DescriptorSource
+	descSource DescriptorSourceMap
 }
 
-// ProtoFile returns a FileDescriptor of the .proto file that will be linted.
-func (r Request) ProtoFile() protoreflect.FileDescriptor {
-	return r.fileDesc
-}
-
-// DescriptorSource returns a DescriptorSource that contains additional source
-// information for the .proto file that will be linted.
-func (r Request) DescriptorSource() DescriptorSource {
-	return r.descSource
-}
-
-// NewProtoRequest creates a linting Request for a .proto file.
-func NewProtoRequest(fd *descriptorpb.FileDescriptorProto) (Request, error) {
+// NewProtoRequest creates a linting protoRequest for a .proto file.
+func NewProtoRequest(fd *descriptorpb.FileDescriptorProto) (protoRequest, error) {
 	f, err := protodesc.NewFile(fd, nil)
 	if err != nil {
-		return Request{}, err
+		return protoRequest{}, err
 	}
-	s, err := newDescriptorSource(fd)
-	return Request{
+	s, err := newDescriptorSourceMap(fd)
+	return protoRequest{
 		fileDesc:   f,
 		descSource: s,
 	}, err

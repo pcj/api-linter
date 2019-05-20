@@ -39,8 +39,8 @@ func (v testDescriptorVisiting) VisitDescriptor(d protoreflect.Descriptor) {
 
 func TestDescriptorLocation(t *testing.T) {
 	req := readProtoFile(t, "test_source.protoset")
-	fileDesc := req.ProtoFile()
-	descSource := req.DescriptorSource()
+	fileDesc := req.fileDesc
+	descSource := req.descSource
 
 	tests := []struct {
 		descriptor protoreflect.Descriptor
@@ -94,8 +94,8 @@ func TestDescriptorLocation(t *testing.T) {
 
 func TestDescriptorComments(t *testing.T) {
 	req := readProtoFile(t, "test_source.protoset")
-	fileDesc := req.ProtoFile()
-	descSource := req.DescriptorSource()
+	fileDesc := req.fileDesc
+	descSource := req.descSource
 
 	tests := []struct {
 		descriptor protoreflect.Descriptor
@@ -135,7 +135,7 @@ func TestDescriptorComments(t *testing.T) {
 
 func TestSyntaxLocation(t *testing.T) {
 	req := readProtoFile(t, "test_source.protoset")
-	descSource := req.DescriptorSource()
+	descSource := req.descSource
 	want := Location{Position{3, 1}, Position{3, 19}}
 	got, err := descSource.SyntaxLocation()
 	if err != nil {
@@ -148,10 +148,10 @@ func TestSyntaxLocation(t *testing.T) {
 
 func TestSyntaxComments(t *testing.T) {
 	req := readProtoFile(t, "test_source.protoset")
-	descSource := req.DescriptorSource()
+	descSource := req.descSource
 
 	want := Comments{
-		LeadingDetachedComments: []string{" DO NOT EDIT -- This is for `source_test.go`.\n"},
+		LeadingDetachedComments: []string{" DO NOT EDIT -- This is for `proto_test.go`.\n"},
 	}
 	got, err := descSource.SyntaxComments()
 	if err != nil {
@@ -164,8 +164,8 @@ func TestSyntaxComments(t *testing.T) {
 
 func TestIsRuleDisabled(t *testing.T) {
 	req := readProtoFile(t, "test_rule_disable.protoset")
-	fileDesc := req.ProtoFile()
-	descSource := req.DescriptorSource()
+	fileDesc := req.fileDesc
+	descSource := req.descSource
 
 	tests := []struct {
 		desc     protoreflect.Descriptor
@@ -232,7 +232,7 @@ func TestIsRuleDisabled(t *testing.T) {
 	}
 }
 
-func readProtoFile(t *testing.T, fileName string) Request {
+func readProtoFile(t *testing.T, fileName string) protoRequest {
 	path := filepath.Join("testdata", fileName)
 	bs, err := ioutil.ReadFile(path)
 	if err != nil {

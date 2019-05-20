@@ -38,12 +38,37 @@ func New(rules Rules, configs Configs) *Linter {
 	return l
 }
 
-// LintProtos checks protobuf files and returns a list of problems or an error.
-func (l *Linter) LintProtos(files []*descriptorpb.FileDescriptorProto) ([]Response, error) {
-	return l.lintProtos(files)
+func (l *Linter) Lint(request LintRequest) ([]Response, error) {
+	var errMessages []string
+	for _, f := range request.Files {
+		for name, rl := range l.rules {
+			config := getDefaultRuleConfig()
+
+			if c, err := request.Configs.getRuleConfig(f.Name, name); err == nil {
+				config = config.withOverride(c)
+			} else {
+				errMessages = append(errMessages, err.Error())
+				continue
+			}
+
+			if !config.Disabled && !req.descSource.isRuleDisabledInFile(rl.Info().Name) {
+				if protoRule, ok := rl.(ProtoRule); ok {
+					if problems, err := protoRule.LintProto(req.fileDesc, req.descSource); err == nil {
+						for _, p := range problems {
+							p.RuleID = rl.Info().Name
+							p.Category = config.Category
+						}
+					} else {
+						errMessages = append(errMessages, err.Error())
+					}
+				}
+			}
+		}
+	}
 }
 
-func (l *Linter) lintProtos(files []*descriptorpb.FileDescriptorProto) ([]Response, error) {
+// LintProtos checks protobuf files and returns a list of problems or an error.
+func (l *Linter) LintProtos(files []*descriptorpb.FileDescriptorProto) ([]Response, error) {
 	var responses []Response
 	for _, proto := range files {
 		req, err := NewProtoRequest(proto)
@@ -64,33 +89,32 @@ func (l *Linter) lintProtos(files []*descriptorpb.FileDescriptorProto) ([]Respon
 // It uses the proto file path to determine which rules will
 // be applied to the request, according to the list of Linter
 // configs.
-func (l *Linter) run(req Request) (Response, error) {
+func (l *Linter) run(req protoRequest) (Response, error) {
 	resp := Response{
-		FilePath: req.ProtoFile().Path(),
+		FilePath: req.fileDesc.Path(),
 	}
 	var errMessages []string
 
 	for name, rl := range l.rules {
 		config := getDefaultRuleConfig()
 
-		if c, err := l.configs.getRuleConfig(req.ProtoFile().Path(), name); err == nil {
+		if c, err := l.configs.getRuleConfig(req.fileDesc.Path(), name); err == nil {
 			config = config.withOverride(c)
 		} else {
 			errMessages = append(errMessages, err.Error())
 			continue
 		}
 
-		if !config.Disabled && !req.DescriptorSource().isRuleDisabledInFile(rl.Info().Name) {
-			if problems, err := rl.Lint(req); err == nil {
-				for _, p := range problems {
-					if !req.DescriptorSource().isRuleDisabled(rl.Info().Name, p.Descriptor) {
+		if !config.Disabled && !req.descSource.isRuleDisabledInFile(rl.Info().Name) {
+			if protoRule, ok := rl.(ProtoRule); ok {
+				if problems, err := protoRule.LintProto(req.fileDesc, req.descSource); err == nil {
+					for _, p := range problems {
 						p.RuleID = rl.Info().Name
 						p.Category = config.Category
-						resp.Problems = append(resp.Problems, p)
 					}
+				} else {
+					errMessages = append(errMessages, err.Error())
 				}
-			} else {
-				errMessages = append(errMessages, err.Error())
 			}
 		}
 	}

@@ -29,7 +29,7 @@ func (r *mockRule) Info() RuleInfo {
 	return r.info
 }
 
-func (r *mockRule) Lint(Request) ([]Problem, error) {
+func (r *mockRule) Lint(protoRequest) ([]Problem, error) {
 	r.lintCalled++
 	return r.lintResp, r.err
 }

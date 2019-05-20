@@ -85,8 +85,8 @@ func MustCreateTemplate(tmpl string) *template.Template {
 	return template.Must(template.New("test").Parse(tmpl))
 }
 
-// MustCreateRequestFromTemplate creates a lint.Request from the provided template and test data.
-func MustCreateRequestFromTemplate(tmpl *template.Template, testData interface{}) lint.Request {
+// MustCreateRequestFromTemplate creates a lint.protoRequest from the provided template and test data.
+func MustCreateRequestFromTemplate(tmpl *template.Template, testData interface{}) lint.protoRequest {
 	b := new(bytes.Buffer)
 	if err := tmpl.Execute(b, testData); err != nil {
 		log.Fatalf("Error executing template %v", err)

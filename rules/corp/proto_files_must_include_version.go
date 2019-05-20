@@ -38,7 +38,7 @@ func protoFilesMustIncludeVersion() lint.Rule {
 			RequestTypes: []lint.RequestType{lint.ProtoRequest},
 		},
 		Callback: descriptor.Callbacks{
-			FileCallback: func(fileDescriptor protoreflect.FileDescriptor, source lint.DescriptorSource) (problems []lint.Problem, e error) {
+			FileCallback: func(fileDescriptor protoreflect.FileDescriptor, source lint.DescriptorSourceMap) (problems []lint.Problem, e error) {
 				if !validVersionStrings.Match([]byte(fileDescriptor.Path())) {
 					return []lint.Problem{{
 						Message:    fmt.Sprintf("The file path %q must include a version specifier", fileDescriptor.Path()),

@@ -23,7 +23,7 @@ import (
 // Callback defines a callback that can be invoke on a descriptor
 // with its source, which will return a list of lint.Problem or an error.
 type Callback interface {
-	Apply(protoreflect.Descriptor, lint.DescriptorSource) ([]lint.Problem, error)
+	Apply(protoreflect.Descriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
 }
 
 // CallbackRule is a lint.Rule with a Callback that checks descriptors.
@@ -32,7 +32,7 @@ type CallbackRule struct {
 	Callback Callback
 
 	problems []lint.Problem
-	source   lint.DescriptorSource
+	source   lint.DescriptorSourceMap
 }
 
 // Info returns a RuleInfo for this rule.
@@ -40,14 +40,14 @@ func (r *CallbackRule) Info() lint.RuleInfo {
 	return r.RuleInfo
 }
 
-// Lint accepts a lint.Request, then walks in the proto file
+// Lint accepts a lint.protoRequest, then walks in the proto file
 // by applying the Callback on each encountered descriptor,
 // and finally returns a list of problems or an error.
-func (r *CallbackRule) Lint(req lint.Request) ([]lint.Problem, error) {
-	r.source = req.DescriptorSource()
+func (r *CallbackRule) LintProto(fd protoreflect.FileDescriptor, sourceMap lint.DescriptorSourceMap) ([]lint.Problem, error) {
+	r.source = sourceMap
 	r.problems = []lint.Problem{}
 
-	if err := Walk(req.ProtoFile(), r); err != nil {
+	if err := Walk(fd, r); err != nil {
 		return nil, err
 	}
 

@@ -14,10 +14,15 @@
 
 package lint
 
+import "github.com/golang/protobuf/v2/reflect/protoreflect"
+
 // Rule defines a lint rule that checks Google Protobuf APIs.
 type Rule interface {
 	// Info returns metadata about a rule.
 	Info() RuleInfo
-	// Lint performs the linting process.
-	Lint(Request) ([]Problem, error)
+}
+
+type ProtoRule interface {
+	Rule
+	LintProto(fd protoreflect.FileDescriptor, sourceMap DescriptorSourceMap) ([]Problem, error)
 }

@@ -39,7 +39,7 @@ func TestLinter_run(t *testing.T) {
 		configs Configs
 		resp    Response
 	}{
-		{"empty config empty response", Configs{}, Response{FilePath: req.ProtoFile().Path()}},
+		{"empty config empty response", Configs{}, Response{FilePath: req.fileDesc.Path()}},
 		{
 			"config with non-matching file has no effect",
 			append(
@@ -49,7 +49,7 @@ func TestLinter_run(t *testing.T) {
 					RuleConfigs:   map[string]RuleConfig{"": {Disabled: true}},
 				},
 			),
-			Response{Problems: ruleProblems, FilePath: req.ProtoFile().Path()},
+			Response{Problems: ruleProblems, FilePath: req.fileDesc.Path()},
 		},
 		{
 			"config with non-matching rule has no effect",
@@ -60,7 +60,7 @@ func TestLinter_run(t *testing.T) {
 					RuleConfigs:   map[string]RuleConfig{"foo::bar": {Disabled: true}},
 				},
 			),
-			Response{Problems: ruleProblems, FilePath: req.ProtoFile().Path()},
+			Response{Problems: ruleProblems, FilePath: req.fileDesc.Path()},
 		},
 		{
 			"matching config can disable rule",
@@ -73,7 +73,7 @@ func TestLinter_run(t *testing.T) {
 					},
 				},
 			),
-			Response{FilePath: req.ProtoFile().Path()},
+			Response{FilePath: req.fileDesc.Path()},
 		},
 		{
 			"matching config can override Category",
@@ -88,7 +88,7 @@ func TestLinter_run(t *testing.T) {
 			),
 			Response{
 				Problems: []Problem{{Message: "rule1_problem", Category: Error, RuleID: "test::rule1"}},
-				FilePath: req.ProtoFile().Path(),
+				FilePath: req.fileDesc.Path(),
 			},
 		},
 	}

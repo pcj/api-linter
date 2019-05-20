@@ -38,7 +38,7 @@ func checkFieldNamesUseLowerSnakeCase() lint.Rule {
 			RequestTypes: []lint.RequestType{lint.ProtoRequest},
 		},
 		Callback: descriptor.Callbacks{
-			FieldCallback: func(d pref.FieldDescriptor, s lint.DescriptorSource) (problems []lint.Problem, err error) {
+			FieldCallback: func(d pref.FieldDescriptor, s lint.DescriptorSourceMap) (problems []lint.Problem, err error) {
 				fieldName := string(d.Name())
 				suggestion := toLowerSnakeCase(fieldName)
 				if fieldName != suggestion {

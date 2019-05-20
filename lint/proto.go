@@ -26,10 +26,10 @@ import (
 
 var (
 	// ErrPathNotFound is the returned error when a path is not found.
-	ErrPathNotFound = errors.New("source: path not found")
+	ErrPathNotFound = errors.New("proto: path not found")
 	// ErrSourceInfoNotAvailable is the returned error when creating a source
 	// but the source information is not available.
-	ErrSourceInfoNotAvailable = errors.New("source: source information is not available")
+	ErrSourceInfoNotAvailable = errors.New("proto: source information is not available")
 )
 
 // Comments describes a collection of comments associate with an element,
@@ -79,23 +79,23 @@ func buildLocPathMap(sci *descriptorpb.SourceCodeInfo) map[locPath]*descriptorpb
 	return m
 }
 
-// DescriptorSource represents a map of locPath to *descriptorpb.SourceCodeInfo_Location.
-type DescriptorSource struct {
+// DescriptorSourceMap represents a map of locPath to *descriptorpb.SourceCodeInfo_Location.
+type DescriptorSourceMap struct {
 	m map[locPath]*descriptorpb.SourceCodeInfo_Location
 }
 
-// newDescriptorSource creates a new DescriptorSource from a FileDescriptorProto.
+// newDescriptorSourceMap creates a new DescriptorSourceMap from a FileDescriptorProto.
 // If source code information is not available, returns (nil, ErrSourceInfoNotAvailable).
-func newDescriptorSource(f *descriptorpb.FileDescriptorProto) (DescriptorSource, error) {
+func newDescriptorSourceMap(f *descriptorpb.FileDescriptorProto) (DescriptorSourceMap, error) {
 	if f.GetSourceCodeInfo() == nil {
-		return DescriptorSource{}, ErrSourceInfoNotAvailable
+		return DescriptorSourceMap{}, ErrSourceInfoNotAvailable
 	}
-	return DescriptorSource{m: buildLocPathMap(f.GetSourceCodeInfo())}, nil
+	return DescriptorSourceMap{m: buildLocPathMap(f.GetSourceCodeInfo())}, nil
 }
 
 // findLocationByPath returns a `Location` if found in the map,
 // and (nil, ErrPathNotFound) if not found.
-func (s DescriptorSource) findLocationByPath(path []int) (Location, error) {
+func (s DescriptorSourceMap) findLocationByPath(path []int) (Location, error) {
 	l := s.m[newLocPath(path...)]
 	if l == nil {
 		return Location{}, ErrPathNotFound
@@ -105,7 +105,7 @@ func (s DescriptorSource) findLocationByPath(path []int) (Location, error) {
 
 // findCommentsByPath returns a `Comments` for the path. If not found, returns
 // (nil, ErrCommentsNotFound).
-func (s DescriptorSource) findCommentsByPath(path []int) (Comments, error) {
+func (s DescriptorSourceMap) findCommentsByPath(path []int) (Comments, error) {
 	l := s.m[newLocPath(path...)]
 	if l == nil {
 		return Comments{}, ErrPathNotFound
@@ -148,18 +148,18 @@ func newLocationFromSpan(span []int32) (Location, error) {
 }
 
 // SyntaxLocation returns the location of the syntax definition.
-func (s DescriptorSource) SyntaxLocation() (Location, error) {
+func (s DescriptorSourceMap) SyntaxLocation() (Location, error) {
 	return s.findLocationByPath([]int{syntaxTag})
 }
 
 // SyntaxComments returns the comments of the syntax definition.
-func (s DescriptorSource) SyntaxComments() (Comments, error) {
+func (s DescriptorSourceMap) SyntaxComments() (Comments, error) {
 	return s.findCommentsByPath([]int{syntaxTag})
 }
 
 // DescriptorLocation returns a `Location` for the given descriptor.
 // If not found, returns (nil, ErrPathNotFound).
-func (s DescriptorSource) DescriptorLocation(d protoreflect.Descriptor) (Location, error) {
+func (s DescriptorSourceMap) DescriptorLocation(d protoreflect.Descriptor) (Location, error) {
 	return s.findLocationByPath(getPath(d))
 }
 
@@ -237,7 +237,7 @@ func isTopLevelDescriptor(d protoreflect.Descriptor) bool {
 
 // DescriptorComments returns a `Comments` for the given descriptor.
 // If not found, returns (nil, ErrCommentsNotFound).
-func (s DescriptorSource) DescriptorComments(d protoreflect.Descriptor) (Comments, error) {
+func (s DescriptorSourceMap) DescriptorComments(d protoreflect.Descriptor) (Comments, error) {
 	return s.findCommentsByPath(getPath(d))
 }
 
@@ -249,9 +249,17 @@ func reverseInts(a []int) {
 
 // isRuleDisabled check if a rule is disabled for a descriptor
 // in the comments.
-func (s DescriptorSource) isRuleDisabled(name RuleName, d protoreflect.Descriptor) bool {
-	commentsToCheck := s.fileComments().LeadingDetachedComments
+func (s DescriptorSourceMap) isRuleDisabled(name RuleName, d protoreflect.Descriptor) bool {
+	var commentsToCheck []string
 
+	// Check file's comments
+	fileComments, err := s.SyntaxComments()
+
+	if err != nil {
+		commentsToCheck = append(commentsToCheck, fileComments.LeadingDetachedComments...)
+	}
+
+	// Check descriptor's and all parents' comments
 	for d, ok := d, true; ok && d != nil; d, ok = d.Parent() {
 		comments, err := s.DescriptorComments(d)
 
@@ -262,28 +270,18 @@ func (s DescriptorSource) isRuleDisabled(name RuleName, d protoreflect.Descripto
 		commentsToCheck = append(commentsToCheck, comments.LeadingComments, comments.TrailingComments)
 	}
 
-	return stringsContains(commentsToCheck, ruleDisablingComment(name))
-}
+	ruleDisablingComment := fmt.Sprintf("(-- api-linter: %s=disabled --)", name)
 
-// isRuleDisabledInFile checks the proto file comments only to see if a rule named name is disabled.
-func (s DescriptorSource) isRuleDisabledInFile(name RuleName) bool {
-	return s.isRuleDisabled(name, nil)
-}
-
-func stringsContains(comments []string, s string) bool {
-	for _, c := range comments {
-		if strings.Contains(c, s) {
+	for _, c := range commentsToCheck {
+		if strings.Contains(c, ruleDisablingComment) {
 			return true
 		}
 	}
+
 	return false
 }
 
-func ruleDisablingComment(name RuleName) string {
-	return fmt.Sprintf("(-- api-linter: %s=disabled --)", name)
-}
-
-func (s DescriptorSource) fileComments() Comments {
-	comments, _ := s.SyntaxComments()
-	return comments
+// isRuleDisabledInFile checks the proto file comments only to see if a rule named name is disabled.
+func (s DescriptorSourceMap) isRuleDisabledInFile(name RuleName) bool {
+	return s.isRuleDisabled(name, nil)
 }

@@ -25,21 +25,21 @@ import (
 // Note: `DescriptorCallback`, if exists, is called only when no *specific*
 // callback is available, i.e., it is a fallback.
 type Callbacks struct {
-	EnumCallback       func(protoreflect.EnumDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	EnumValueCallback  func(protoreflect.EnumValueDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	FieldCallback      func(protoreflect.FieldDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	ExtensionCallback  func(protoreflect.ExtensionDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	FileCallback       func(protoreflect.FileDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	MessageCallback    func(protoreflect.MessageDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	MethodCallback     func(protoreflect.MethodDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	ServiceCallback    func(protoreflect.ServiceDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	OneofCallback      func(protoreflect.OneofDescriptor, lint.DescriptorSource) ([]lint.Problem, error)
-	DescriptorCallback func(protoreflect.Descriptor, lint.DescriptorSource) ([]lint.Problem, error)
+	EnumCallback       func(protoreflect.EnumDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	EnumValueCallback  func(protoreflect.EnumValueDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	FieldCallback      func(protoreflect.FieldDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	ExtensionCallback  func(protoreflect.ExtensionDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	FileCallback       func(protoreflect.FileDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	MessageCallback    func(protoreflect.MessageDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	MethodCallback     func(protoreflect.MethodDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	ServiceCallback    func(protoreflect.ServiceDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	OneofCallback      func(protoreflect.OneofDescriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
+	DescriptorCallback func(protoreflect.Descriptor, lint.DescriptorSourceMap) ([]lint.Problem, error)
 }
 
 // Apply invokes a specific, corresponding callback for the descriptor with the source.
 // Only when no specific callback is available, the `DescriptorCallback` will be tried.
-func (c Callbacks) Apply(d protoreflect.Descriptor, src lint.DescriptorSource) ([]lint.Problem, error) {
+func (c Callbacks) Apply(d protoreflect.Descriptor, src lint.DescriptorSourceMap) ([]lint.Problem, error) {
 	switch desc := d.(type) {
 	case protoreflect.EnumDescriptor:
 		if c.EnumCallback != nil {

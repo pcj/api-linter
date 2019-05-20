@@ -35,7 +35,7 @@ func checkProtoVersion() lint.Rule {
 			RequestTypes: []lint.RequestType{lint.ProtoRequest},
 		},
 		Callback: descriptor.Callbacks{
-			FileCallback: func(f protoreflect.FileDescriptor, s lint.DescriptorSource) ([]lint.Problem, error) {
+			FileCallback: func(f protoreflect.FileDescriptor, s lint.DescriptorSourceMap) ([]lint.Problem, error) {
 				location, _ := s.SyntaxLocation()
 				if f.Syntax() != protoreflect.Proto3 {
 					return []lint.Problem{
