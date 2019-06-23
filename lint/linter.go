@@ -45,7 +45,7 @@ func New(rules Rules, configs Configs) *Linter {
 // for any imported file must be present in files. If any file in files has an import that is not also in the
 // slice, an error will be returned.
 func (l *Linter) LintProtos(files []*descriptorpb.FileDescriptorProto) ([]Response, error) {
-	log.Printf("lint: creating registry from %d files", len(files))
+	log.Printf("lint: creating registry from: %v", files)
 	reg, err := makeRegistryFromAllFiles(files)
 
 	if err != nil {
@@ -60,6 +60,8 @@ func (l *Linter) LintProtos(files []*descriptorpb.FileDescriptorProto) ([]Respon
 func (l *Linter) LintProtosWithRegistry(files []*descriptorpb.FileDescriptorProto, reg *protoregistry.Files) ([]Response, error) {
 	var responses []Response
 	for _, proto := range files {
+		log.Printf("lint: preparing request: %q", proto.GetName())
+
 		req, err := NewProtoRequest(proto, reg)
 		if err != nil {
 			return nil, err
@@ -106,15 +108,20 @@ func (l *Linter) run(req Request) (Response, error) {
 					}
 				}
 			} else {
+				log.Printf("lint: error while applying rule %q: %v", name, err)
 				errMessages = append(errMessages, err.Error())
 			}
 		}
+
+		log.Printf("lint: applied rule %q", name)
 	}
 
 	var err error
 	if len(errMessages) != 0 {
 		err = errors.New(strings.Join(errMessages, "; "))
 	}
+
+	log.Printf("lint: run complete.")
 
 	return resp, err
 }
