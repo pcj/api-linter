@@ -19,6 +19,7 @@ package lint
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"google.golang.org/protobuf/reflect/protoregistry"
@@ -44,6 +45,7 @@ func New(rules Rules, configs Configs) *Linter {
 // for any imported file must be present in files. If any file in files has an import that is not also in the
 // slice, an error will be returned.
 func (l *Linter) LintProtos(files []*descriptorpb.FileDescriptorProto) ([]Response, error) {
+	log.Printf("lint: creating registry from %d files", len(files))
 	reg, err := makeRegistryFromAllFiles(files)
 
 	if err != nil {
@@ -84,6 +86,8 @@ func (l *Linter) run(req Request) (Response, error) {
 
 	for name, rl := range l.rules {
 		var config RuleConfig
+
+		log.Printf("lint: applying rule %q", name)
 
 		if c, err := l.configs.GetRuleConfig(req.ProtoFile().Path(), name); err == nil {
 			config = config.withOverride(c)
